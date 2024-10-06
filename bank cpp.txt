@@ -1,0 +1,199 @@
+﻿#include <stdio.h>
+#include <string.h>
+
+#define MAX_ACCOUNTS 100
+#define MAX_TRANSACTIONS 100
+
+struct Account {
+    char name[50];
+    int accountNumber;
+    float balance;
+    char transactionHistory[MAX_TRANSACTIONS][100];
+    int transactionCount;
+};
+
+void createAccount(struct Account accounts[], int *numAccounts) {
+    if (*numAccounts >= MAX_ACCOUNTS) {
+        printf("Account limit reached! Cannot create more accounts.\n");
+        return;
+    }
+    
+    struct Account *acc = &accounts[*numAccounts];
+    
+    printf("Enter account holder's name: ");
+    scanf("%s", acc->name);
+    printf("Enter account number: ");
+    scanf("%d", &acc->accountNumber);
+    acc->balance = 0;
+    acc->transactionCount = 0;
+    (*numAccounts)++;
+    printf("Account created successfully.\n");
+}
+
+void displayAccount(struct Account acc) {
+    printf("\nAccount Details:\n");
+    printf("Name: %s\n", acc.name);
+    printf("Account Number: %d\n", acc.accountNumber);
+    printf("Balance: %.2f\n", acc.balance);
+    printf("Transaction History:\n");
+    for (int i = 0; i < acc.transactionCount; i++) {
+        printf("%d. %s\n", i + 1, acc.transactionHistory[i]);
+    }
+}
+
+int searchAccount(struct Account accounts[], int numAccounts, int accountNumber) {
+    for (int i = 0; i < numAccounts; i++) {
+        if (accounts[i].accountNumber == accountNumber) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void deposit(struct Account *acc, float amount) {
+    acc->balance += amount;
+    printf("Amount deposited successfully. Current Balance: %.2f\n", acc->balance);
+    snprintf(acc->transactionHistory[acc->transactionCount], 100, "Deposited: %.2f", amount);
+    acc->transactionCount++;
+}
+
+void withdraw(struct Account *acc, float amount) {
+    if (amount > acc->balance) {
+        printf("Insufficient balance!\n");
+    } else {
+        acc->balance -= amount;
+        printf("Amount withdrawn successfully. Current Balance: %.2f\n", acc->balance);
+        snprintf(acc->transactionHistory[acc->transactionCount], 100, "Withdrew: %.2f", amount);
+        acc->transactionCount++;
+    }
+}
+
+void deleteAccount(struct Account accounts[], int *numAccounts, int accountNumber) {
+    int index = searchAccount(accounts, *numAccounts, accountNumber);
+    if (index != -1) {
+        for (int i = index; i < *numAccounts - 1; i++) {
+            accounts[i] = accounts[i + 1];
+        }
+        (*numAccounts)--;
+        printf("Account deleted successfully.\n");
+    } else {
+        printf("Account not found!\n");
+    }
+}
+
+void updateAccount(struct Account *acc) {
+    printf("Enter new account holder's name: ");
+    scanf("%s", acc->name);
+    printf("Account details updated successfully.\n");
+}
+
+void transferFunds(struct Account *acc1, struct Account *acc2, float amount) {
+    if (amount > acc1->balance) {
+        printf("Insufficient balance in account %d!\n", acc1->accountNumber);
+    } else {
+        acc1->balance -= amount;
+        acc2->balance += amount;
+        printf("Amount transferred successfully.\n");
+        snprintf(acc1->transactionHistory[acc1->transactionCount], 100, "Transferred: %.2f to %d", amount, acc2->accountNumber);
+        acc1->transactionCount++;
+        snprintf(acc2->transactionHistory[acc2->transactionCount], 100, "Received: %.2f from %d", amount, acc1->accountNumber);
+        acc2->transactionCount++;
+    }
+}
+
+int main() {
+    struct Account accounts[MAX_ACCOUNTS];
+    int numAccounts = 0;
+    int choice, accountNumber, index1, index2;
+    float amount;
+
+    while (1) {
+        printf("\n1. Create Account\n2. Display Account\n3. Deposit\n4. Withdraw\n5. Delete Account\n6. Update Account\n7. Transfer Funds\n8. Display All Accounts\n9. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                createAccount(accounts, &numAccounts);
+                break;
+            case 2:
+                printf("Enter account number to display: ");
+                scanf("%d", &accountNumber);
+                index1 = searchAccount(accounts, numAccounts, accountNumber);
+                if (index1 != -1) {
+                    displayAccount(accounts[index1]);
+                } else {
+                    printf("Account not found!\n");
+                }
+                break;
+            case 3:
+                printf("Enter account number to deposit into: ");
+                scanf("%d", &accountNumber);
+                index1 = searchAccount(accounts, numAccounts, accountNumber);
+                if (index1 != -1) {
+                    printf("Enter amount to deposit: ");
+                    scanf("%f", &amount);
+                    deposit(&accounts[index1], amount);
+                } else {
+                    printf("Account not found!\n");
+                }
+                break;
+            case 4:
+                printf("Enter account number to withdraw from: ");
+                scanf("%d", &accountNumber);
+                index1 = searchAccount(accounts, numAccounts, accountNumber);
+                if (index1 != -1) {
+                    printf("Enter amount to withdraw: ");
+                    scanf("%f", &amount);
+                    withdraw(&accounts[index1], amount);
+                } else {
+                    printf("Account not found!\n");
+                }
+                break;
+            case 5:
+                printf("Enter account number to delete: ");
+                scanf("%d", &accountNumber);
+                deleteAccount(accounts, &numAccounts, accountNumber);
+                break;
+            case 6:
+                printf("Enter account number to update: ");
+                scanf("%d", &accountNumber);
+                index1 = searchAccount(accounts, numAccounts, accountNumber);
+                if (index1 != -1) {
+                    updateAccount(&accounts[index1]);
+                } else {
+                    printf("Account not found!\n");
+                }
+                break;
+            case 7:
+                printf("Enter account number to transfer from: ");
+                scanf("%d", &accountNumber);
+                index1 = searchAccount(accounts, numAccounts, accountNumber);
+                if (index1 != -1) {
+                    printf("Enter account number to transfer to: ");
+                    scanf("%d", &accountNumber);
+                    index2 = searchAccount(accounts, numAccounts, accountNumber);
+                    if (index2 != -1) {
+                        printf("Enter amount to transfer: ");
+                        scanf("%f", &amount);
+                        transferFunds(&accounts[index1], &accounts[index2], amount);
+                    } else {
+                        printf("Recipient account not found!\n");
+                    }
+                } else {
+                    printf("Sender account not found!\n");
+                }
+                break;
+            case 8:
+                for (int i = 0; i < numAccounts; i++) {
+                    displayAccount(accounts[i]);
+                }
+                break;
+            case 9:
+                return 0;
+            default:
+                printf("Invalid choice!\n");
+        }
+    }
+    return 0;
+}
